@@ -54,9 +54,24 @@ const formatDate = (timestamp: number) => {
 
 const Dashboard: FC = () => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
-  const [stats, setStats] = useState<ReturnType<typeof getFeedbackStats>>(
-    { total: 0, counts: {}, percentages: {} }
-  );
+  const [stats, setStats] = useState<ReturnType<typeof getFeedbackStats>>({
+    total: 0,
+    counts: {
+      very_satisfied: 0,
+      satisfied: 0,
+      neutral: 0,
+      dissatisfied: 0,
+      very_dissatisfied: 0
+    },
+    percentages: {
+      very_satisfied: 0,
+      satisfied: 0,
+      neutral: 0,
+      dissatisfied: 0,
+      very_dissatisfied: 0
+    }
+  });
+  
   const { toast } = useToast();
   
   // Load feedback data
