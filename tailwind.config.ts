@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,6 +53,30 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				registrar: {
+					50: '#E6F0F9',
+					100: '#CCE0F3',
+					200: '#99C2E7',
+					300: '#66A3DB',
+					400: '#3385CF',
+					500: '#0F4C81',
+					600: '#0C3D67',
+					700: '#092E4E',
+					800: '#061E34',
+					900: '#030F1A',
+				},
+				accent: {
+					50: '#FFFAEB',
+					100: '#FFF5D7',
+					200: '#FFEAAF',
+					300: '#FFE087',
+					400: '#FFD75F',
+					500: '#FFD23F',
+					600: '#CCA832',
+					700: '#997E26',
+					800: '#665419',
+					900: '#332A0D',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -84,11 +109,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-scale': {
+					'0%, 100%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.1)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-scale': 'pulse-scale 1.5s ease-in-out infinite',
 			}
 		}
 	},
