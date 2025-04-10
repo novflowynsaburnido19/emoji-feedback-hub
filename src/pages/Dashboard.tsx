@@ -19,7 +19,7 @@ import { Smile, Meh, Frown, Angry, Trash2, FileText, Calendar, Download, Printer
 import { 
   BarChart, 
   Bar, 
-  XAxis, 
+  XAxis,  dhwadwadvawvdwvwd
   YAxis, 
   CartesianGrid, 
   Tooltip,
