@@ -9,7 +9,7 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({ 
   showAdminLink = false,
-  title = "Registrar's Office Feedback"
+  title = "Office of the University Registrar - USTP CDO"
 }) => {
   return (
     <header className="bg-primary text-primary-foreground shadow-md">
