@@ -1,5 +1,5 @@
-import { connectToDatabase } from './_db.js';
-import Feedback from './feedbackModel.js';
+import { connectToDatabase } from './_db';
+import Feedback from './feedbackModel';
 
 export default async function handler(req, res) {
   // ✅ Set CORS headers
