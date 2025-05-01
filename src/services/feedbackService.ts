@@ -1,7 +1,7 @@
 import { Feedback, EmojiRating } from "@/types/feedback";
 
-// Base URL for the backend API
-const API_URL = 'http://localhost:5000/api/feedback';
+// ✅
+const API_URL = 'https://registrar-feedback.vercel.app/api/feedback';
 
 export const saveFeedback = async (emoji: EmojiRating, comment?: string): Promise<Feedback> => {
   const response = await fetch(API_URL, {
@@ -45,13 +45,16 @@ export const getFeedbackStats = async () => {
   const allFeedback = await getFeedbackList();
   const total = allFeedback.length;
   if (total === 0) return { total: 0, counts: {}, percentages: {} };
+
   const counts = allFeedback.reduce((acc, item) => {
     acc[item.emoji] = (acc[item.emoji] || 0) + 1;
     return acc;
   }, {} as Record<EmojiRating, number>);
+
   const percentages = Object.entries(counts).reduce((acc, [key, count]) => {
     acc[key as EmojiRating] = Math.round((count / total) * 100);
     return acc;
   }, {} as Record<EmojiRating, number>);
+
   return { total, counts, percentages };
 };
