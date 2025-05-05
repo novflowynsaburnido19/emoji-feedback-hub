@@ -1,60 +1,46 @@
+
 import { Feedback, EmojiRating } from "@/types/feedback";
 
-// ✅
-const API_URL = 'https://registrar-feedback.vercel.app/api/feedback';
+const STORAGE_KEY = 'registrar_feedback';
 
-export const saveFeedback = async (emoji: EmojiRating, comment?: string): Promise<Feedback> => {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ emoji, comment }),
-  });
+export const saveFeedback = (rating: EmojiRating, comment?: string): Feedback => {
+  const feedback: Feedback = {
+    id: Date.now().toString(),
+    rating,
+    comment,
+    timestamp: Date.now(),
+  };
 
-  if (!response.ok) {
-    throw new Error('Failed to save feedback');
-  }
-
-  const data: Feedback = await response.json();
-  return data;
+  const existing = getFeedbackList();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...existing, feedback]));
+  
+  return feedback;
 };
 
-export const getFeedbackList = async (): Promise<Feedback[]> => {
-  const response = await fetch(API_URL);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch feedback');
-  }
-
-  const data: Feedback[] = await response.json();
-  return data;
+export const getFeedbackList = (): Feedback[] => {
+  const storedData = localStorage.getItem(STORAGE_KEY);
+  return storedData ? JSON.parse(storedData) : [];
 };
 
-export const clearAllFeedback = async (): Promise<void> => {
-  const response = await fetch(API_URL, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to clear feedback');
-  }
+export const clearAllFeedback = (): void => {
+  localStorage.removeItem(STORAGE_KEY);
 };
 
-export const getFeedbackStats = async () => {
-  const allFeedback = await getFeedbackList();
+export const getFeedbackStats = () => {
+  const allFeedback = getFeedbackList();
   const total = allFeedback.length;
+  
   if (total === 0) return { total: 0, counts: {}, percentages: {} };
-
+  
   const counts = allFeedback.reduce((acc, item) => {
-    acc[item.emoji] = (acc[item.emoji] || 0) + 1;
+    acc[item.rating] = (acc[item.rating] || 0) + 1;
     return acc;
   }, {} as Record<EmojiRating, number>);
-
+  
   const percentages = Object.entries(counts).reduce((acc, [key, count]) => {
     acc[key as EmojiRating] = Math.round((count / total) * 100);
     return acc;
   }, {} as Record<EmojiRating, number>);
-
+  
   return { total, counts, percentages };
 };
