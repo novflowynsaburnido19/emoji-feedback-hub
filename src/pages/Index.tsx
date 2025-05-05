@@ -1,7 +1,6 @@
-
 import { FC } from 'react';
 import Header from '@/components/Header';
-import FeedbackForm from '@/components/FeedbackForm';
+import { FeedbackForm } from '@/components/FeedbackForm'; // Changed to named import
 import { Card, CardContent } from '@/components/ui/card';
 
 const Index: FC = () => {
@@ -28,7 +27,7 @@ const Index: FC = () => {
       </main>
       
       <footer className="bg-muted py-4 text-center text-sm text-muted-foreground">
-        &copy; {new Date().getFullYear()} University Registrar's Office. All rights reserved.
+        © {new Date().getFullYear()} University Registrar's Office. All rights reserved.
       </footer>
     </div>
   );

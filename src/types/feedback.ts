@@ -1,9 +1,8 @@
-
 export type EmojiRating = 'very_satisfied' | 'satisfied' | 'neutral' | 'dissatisfied' | 'very_dissatisfied';
 
 export interface Feedback {
   id: string;
-  rating: EmojiRating;
+  emoji: EmojiRating;
   comment?: string;
-  timestamp: number;
+  timestamp: string; 
 }

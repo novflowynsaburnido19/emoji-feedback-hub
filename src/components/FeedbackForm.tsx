@@ -1,53 +1,54 @@
+// src/components/FeedbackForm.tsx
 
-import { FC, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { EmojiRating } from '@/types/feedback';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { Label } from '@/components/ui/label';
+import { EmojiRating } from '@/types/feedback';
 import EmojiSelector from '@/components/EmojiSelector';
 import { saveFeedback } from '@/services/feedbackService';
+import { toast } from 'sonner';
 
-const FeedbackForm: FC = () => {
+export function FeedbackForm() {
   const [rating, setRating] = useState<EmojiRating | null>(null);
-  const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [comment, setComment] = useState<string>('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!rating) {
-      toast({
-        title: "Please select an emoji",
-        description: "Let us know how you feel about your experience",
-        variant: "destructive"
-      });
+      toast.error('Please select a rating');
       return;
     }
 
-    setIsSubmitting(true);
-    
     try {
-      saveFeedback(rating, comment);
-      navigate('/thank-you');
+      // Save to DB (async) while keeping emoji selector UX
+      await saveFeedback(rating, comment);
+      toast.success('Feedback submitted successfully');
+
+      // Reset form state
+      setRating(null);
+      setComment('');
     } catch (error) {
-      toast({
-        title: "Error saving feedback",
-        description: "Please try again later",
-        variant: "destructive"
-      });
-      setIsSubmitting(false);
+      toast.error('Failed to submit feedback');
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <EmojiSelector selected={rating} onSelect={setRating} />
-      
-      <div className="mt-8">
-        <label htmlFor="comment" className="block text-sm font-medium mb-2">
-          Additional comments (optional)
-        </label>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 max-w-xl mx-auto p-4"
+    >
+      <div>
+        <Label>Rating</Label>
+        <EmojiSelector
+          selected={rating}
+          onSelect={setRating}
+        />
+      </div>
+
+      <div>
+        <Label>Comment (optional)</Label>
         <Textarea
           id="comment"
           placeholder="Tell us more about your experience..."
@@ -56,18 +57,10 @@ const FeedbackForm: FC = () => {
           className="min-h-[120px]"
         />
       </div>
-      
-      <div className="mt-8 flex justify-center">
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isSubmitting || !rating}
-          className="w-full md:w-auto px-10"
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-        </Button>
-      </div>
-    </div>
-  );
-};
 
-export default FeedbackForm;
+      <Button type="submit" className="w-full">
+        Submit Feedback
+      </Button>
+    </form>
+  );
+}
