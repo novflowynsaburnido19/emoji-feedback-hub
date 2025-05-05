@@ -1,96 +1,98 @@
-import { jsPDF } from 'jspdf';
-import { Feedback } from '@/types/feedback';
 
-// Map emoji ratings to text representation
-const emojiToText = (rating: string): string => {
+import jsPDF from 'jspdf';
+import { format, subDays, subWeeks, subMonths, subYears, isAfter } from 'date-fns';
+import { Feedback, EmojiRating } from '@/types/feedback';
+
+// Map emoji ratings to text representation for PDF
+const emojiToText = (rating: EmojiRating): string => {
   switch (rating) {
-    case 'very_satisfied': return 'Very Satisfied';
-    case 'satisfied': return 'Satisfied';
-    case 'neutral': return 'Neutral';
-    case 'dissatisfied': return 'Dissatisfied';
-    case 'very_dissatisfied': return 'Very Dissatisfied';
-    default: return 'Unknown';
+    case 'very_satisfied': return '😁 Very Satisfied';
+    case 'satisfied': return '🙂 Satisfied';
+    case 'neutral': return '😐 Neutral';
+    case 'dissatisfied': return '🙁 Dissatisfied';
+    case 'very_dissatisfied': return '😠 Very Dissatisfied';
   }
-};
-
-// Generate PDF with Rating, Timestamp, and Comment in one table
-export const generatePDF = (feedback: Feedback[]): void => {
-  if (!feedback || feedback.length === 0) {
-    return; // Simply return if no feedback is available, without a toast notification
-  }
-
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "normal");
-
-  // Title of the document
-  doc.text("Feedback Report", 20, 20);
-  doc.setFontSize(12);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
-
-  // Adding table headers for Rating, Timestamp, and Comment
-  const headers = ['Rating', 'Timestamp', 'Comment'];
-  const startY = 40;
-  const headerX = [20, 60, 120]; // X positions for the three columns
-  const rowHeight = 12; // Row height for the table
-  const maxCommentWidth = 150; // Width for comments column
-
-  // Draw the table headers
-  doc.text(headers[0], headerX[0], startY);
-  doc.text(headers[1], headerX[1], startY);
-  doc.text(headers[2], headerX[2], startY);
-
-  // Draw a line under the headers
-  doc.setLineWidth(0.5);
-  doc.line(20, startY + 2, 190, startY + 2);
-
-  let y = startY + rowHeight + 5; // Start from the next line after headers
-
-  // Draw Rating, Timestamp, and Comment table rows
-  feedback.forEach((item) => {
-    if (y > 250) {
-      doc.addPage();  // Add a new page if the content exceeds page space
-      y = 20; // Reset y position after new page
-    }
-
-    // Add Rating and Timestamp data in rows
-    doc.text(emojiToText(item.emoji), headerX[0], y);
-    doc.text(item.timestamp, headerX[1], y);
-
-    // Use splitTextToSize for wrapping comments to fit within the available width
-    const commentLines = doc.splitTextToSize(item.comment || '(No comment)', maxCommentWidth);
-    commentLines.forEach((line, index) => {
-      doc.text(line, headerX[2], y + (index * rowHeight));
-    });
-
-    // Move to the next row after the comment (depending on how many lines it took)
-    y += rowHeight * (commentLines.length + 1);
-  });
-
-  // Format the current date to be used in the filename (e.g., "2025-04-24")
-  const currentDate = new Date();
-  const formattedDate = currentDate.toISOString().split('T')[0]; // Get date in "YYYY-MM-DD" format
-
-  // Save the PDF with the current date in the filename
-  doc.save(`USTP-Registrar-feedback-${formattedDate}.pdf`);
 };
 
 // Filter feedback by date range
-export const filterFeedbackByDate = (feedback: Feedback[], filter: string): Feedback[] => {
-  const now = Date.now();
-  const msInDay = 86400000;
+export const filterFeedbackByDate = (
+  feedback: Feedback[], 
+  filterType: 'all' | 'day' | 'week' | 'month' | 'year'
+): Feedback[] => {
+  if (filterType === 'all') return feedback;
+  
+  const now = new Date();
+  const cutoffDate = 
+    filterType === 'day' ? subDays(now, 1) :
+    filterType === 'week' ? subWeeks(now, 1) :
+    filterType === 'month' ? subMonths(now, 1) :
+    subYears(now, 1);
+  
+  return feedback.filter(item => isAfter(new Date(item.timestamp), cutoffDate));
+};
 
-  const ranges: Record<string, number> = {
-    day: now - msInDay,
-    week: now - msInDay * 7,
-    month: now - msInDay * 30,
-    year: now - msInDay * 365,
-  };
-
-  if (filter === 'all') return feedback;
-
-  return feedback.filter(item => {
-    const timestamp = new Date(item.timestamp).getTime();
-    return timestamp >= ranges[filter];
+// Generate PDF report
+export const generatePDF = (feedback: Feedback[], filterType: 'all' | 'day' | 'week' | 'month' | 'year'): void => {
+  const filteredFeedback = filterFeedbackByDate(feedback, filterType);
+  const doc = new jsPDF();
+  
+  // Add title and current date
+  const currentDate = format(new Date(), 'MMMM d, yyyy');
+  const title = `Registrar's Office Feedback Report - ${currentDate}`;
+  doc.setFontSize(16);
+  doc.text(title, 20, 20);
+  
+  // Add filter information
+  doc.setFontSize(12);
+  const filterText = filterType === 'all' 
+    ? 'All Time' 
+    : `Last ${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`;
+  doc.text(`Period: ${filterText}`, 20, 30);
+  doc.text(`Total Responses: ${filteredFeedback.length}`, 20, 40);
+  
+  // Column headers
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date', 20, 55);
+  doc.text('Rating', 80, 55);
+  doc.text('Comment', 140, 55);
+  
+  // Separator line
+  doc.line(20, 58, 190, 58);
+  
+  // Add feedback items
+  doc.setFont('helvetica', 'normal');
+  let y = 65;
+  
+  filteredFeedback.forEach((item, index) => {
+    // Check if we need a new page
+    if (y > 270) {
+      doc.addPage();
+      // Reset y position and redraw headers on new page
+      y = 20;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date', 20, y);
+      doc.text('Rating', 80, y);
+      doc.text('Comment', 140, y);
+      doc.line(20, y + 3, 190, y + 3);
+      doc.setFont('helvetica', 'normal');
+      y += 10;
+    }
+    
+    const date = format(new Date(item.timestamp), 'MM/dd/yyyy HH:mm');
+    const rating = emojiToText(item.rating);
+    const comment = item.comment || '(No comment)';
+    
+    // Truncate comment if too long
+    const truncatedComment = comment.length > 25 ? comment.substring(0, 22) + '...' : comment;
+    
+    doc.text(date, 20, y);
+    doc.text(rating, 80, y);
+    doc.text(truncatedComment, 140, y);
+    
+    y += 8;
   });
+  
+  // Save the PDF
+  doc.save(`registrar-feedback-${filterType}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
